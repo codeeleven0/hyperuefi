@@ -47,4 +47,4 @@ To install the bootloader, run `bcdboot Q:\Windows /s P:`.<br>
 To reboot, run `wpeutil reboot`.<br>
 
 # Important Note
-Sometimes, the WIM inside the installation drive might fail. Copy the WIM from a verified image to a USB drive and invoke DISM there. You might need to unplug and replug your keyboard again to access menu after the boot menu appears.
+Sometimes, the WIM inside the installation drive might fail. Copy the WIM from a verified image to a USB drive and invoke DISM there. You might need to unplug and replug your keyboard again to access menu after the boot menu appears. When VirtIO drivers are first installed, the resolution will be a bit off. The cursor and the VM video will be shifted (apart, even). To fix, change the VM resolution to the native resolution (mouse still works but shifted).
