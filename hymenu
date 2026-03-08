@@ -69,7 +69,7 @@ hymenu_submenu_config_vm() {
         if dialog --no-cancel --yesno "Do you want to use auto calculation?" 0 0; then
             clear
             printf "RAM size: "
-            echo "$(($(free -mt | tail -n1 | awk '{print $NF}')-$((1024+768))))M" | tee /opt/hyperuefi/ramconfig
+            echo "$(($(free -mt | tail -n1 | awk '{print $NF}')-$((2048+256))))M" | tee /opt/hyperuefi/ramconfig
             sleep 3
         else
             RESULT=$(dialog --no-cancel --inputbox "New RAM size (units M, G)\nThis field is not checked." 0 0 "$(cat /opt/hyperuefi/ramconfig)" 3>&1 1>&2 2>&3)
