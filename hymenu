@@ -28,7 +28,7 @@ if [ -e /tmp/hymenu.bypass ]; then
     if [ "$EXC" == "0" ]; then rm /tmp/hymenu.bypass; else exit 0; fi
 fi
 hymenu() {
-    RESULT=$(dialog --no-cancel --timeout 5 --menu "HyperUEFI v1.0 Boot Menu (qemuefi)\nWill boot in 5 seconds." 0 0 5 "1" "Boot normally" "2" "Edit configuration" "3" "Drop to shell" "4" "Reboot" "5" "Power off" 3>&1 1>&2 2>&3)
+    RESULT=$(dialog --no-cancel --timeout 10 --menu "HyperUEFI v1.0 Boot Menu (qemuefi)\nWill boot in 10 seconds." 0 0 5 "1" "Boot normally" "2" "Edit configuration" "3" "Drop to shell" "4" "Reboot" "5" "Power off" 3>&1 1>&2 2>&3)
     if [ "$?" == "255" ]; then
         sudo setsid -w /opt/hyperuefi/kvmd
         while true; do hymenu; done

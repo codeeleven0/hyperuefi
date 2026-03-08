@@ -47,4 +47,4 @@ To install the bootloader, run `bcdboot Q:\Windows /s P:`.<br>
 To reboot, run `wpeutil reboot`.<br>
 
 # Important Note
-Sometimes, the WIM inside the installation drive might fail. Copy the WIM from a verified image to a USB drive and invoke DISM there.
+Sometimes, the WIM inside the installation drive might fail. Copy the WIM from a verified image to a USB drive and invoke DISM there. You might need to unplug and replug your keyboard again to access menu after the boot menu appears.
