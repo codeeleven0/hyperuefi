@@ -1,0 +1,25 @@
+#!/bin/bash
+sudo chvt -C /dev/console 1
+sudo systemctl stop getty@tty*.service
+sudo systemctl mask --now ctrl-alt-del.target
+sudo systemctl daemon-reload
+devices=()
+enum_usb() {
+	devices_lc=()
+	for device in $(lsusb | grep -v "1d6b:" | awk '{print $6}'); do echo device_add usb-host,vendorid=0x$(echo $device | cut -d":" -f1),productid=0x$(echo $device | cut -d":" -f2),id=dev-$(echo $device | cut -d":" -f1)-$(echo $device | cut -d":" -f2); 
+		devices_lc+=(dev-$(echo $device | cut -d":" -f1)-$(echo $device | cut -d":" -f2));
+	done
+        diff_devrm=$(grep -vFf <(printf '%s\n' "${devices_lc[@]}") <(printf '%s\n' "${devices[@]}"))
+        for rmf in $diff_devrm; do echo device_del $rmf; done
+	devices=("${devices_lc[@]}")
+}
+mon() {
+	echo s
+	enum_usb
+	echo system_reset
+	echo c
+	while true; do enum_usb; sleep 1; done
+}
+sudo qemu-system-aarch64 -S -bios /usr/share/qemu-efi-aarch64/QEMU_EFI.fd -object "memory-backend-memfd,id=mem,size=$(cat /opt/hyperuefi/ramconfig)",share=true -machine virt,memory-backend=mem -display sdl,gl=on,show-cursor=off,grab-mod=lshift-lctrl-lalt -parallel none -serial none -device qemu-xhci -full-screen  -smp "$(cat /opt/hyperuefi/coreconfig)" -drive if=none,id=system,file=/opt/hyperuefi/kvm.qcow2,format=qcow2 -device nvme,drive=system,serial=nvme-serial -netdev "user,ipv4=on,ipv6=on,id=net0,$(cat /opt/hyperuefi/netargs)" -device virtio-net,netdev=net0 -cpu host -accel kvm -monitor telnet:127.0.0.1:44005,server,nowait -audiodev alsa,id=snd0 -device usb-audio,audiodev=snd0 -device "$(cat /opt/hyperuefi/gpuconfig)" $(cat /opt/hyperuefi/args) &
+sleep 7
+mon | telnet localhost 44005 > /dev/null 2>&1

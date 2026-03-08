@@ -1,0 +1,109 @@
+#!/bin/bash
+if [ "$UID" != "0" ]; then
+    printf "\a"
+    dialog --msgbox "Run this script as root." 0 0
+    exit 1
+fi
+if [ ! -e /opt/hyperuefi/kvm.qcow2 ]; then
+    qemu-img create -f qcow2 /opt/hyperuefi/kvm.qcow2 64G
+fi
+if [ ! -e /opt/hyperuefi/args ]; then
+    touch /opt/hyperuefi/args
+fi
+if [ ! -e /opt/hyperuefi/coreconfig ]; then
+    echo 2 > /opt/hyperuefi/coreconfig
+fi
+if [ ! -e /opt/hyperuefi/gpuconfig ]; then
+    echo ramfb > /opt/hyperuefi/gpuconfig
+fi
+if [ ! -e /opt/hyperuefi/netargs ]; then
+    echo > /opt/hyperuefi/netargs
+fi
+if [ ! -e /opt/hyperuefi/ramconfig ]; then
+    echo 2G > /opt/hyperuefi/ramconfig
+fi
+if [ -e /tmp/hymenu.bypass ]; then
+    dialog --pause "Loading boot menu..." 15 20 5
+    EXC=$?
+    if [ "$EXC" == "0" ]; then rm /tmp/hymenu.bypass; else exit 0; fi
+fi
+hymenu() {
+    RESULT=$(dialog --no-cancel --timeout 5 --menu "HyperUEFI v1.0 Boot Menu (qemuefi)\nWill boot in 5 seconds." 0 0 5 "1" "Boot normally" "2" "Edit configuration" "3" "Drop to shell" "4" "Reboot" "5" "Power off" 3>&1 1>&2 2>&3)
+    if [ "$?" == "255" ]; then
+        sudo setsid -w /opt/hyperuefi/kvmd
+        sudo systemctl --all start getty@tty*.service
+        while true; do hymenu; done
+    fi
+    if [ "$RESULT" == "1" ]; then
+        sudo setsid -w /opt/hyperuefi/kvmd
+        sudo systemctl --all start getty@tty*.service
+        while true; do hymenu; done
+    elif [ "$RESULT" == "2" ]; then
+        hymenu_submenu_config
+        while true; do hymenu; done
+    elif [ "$RESULT" == "3" ]; then
+        touch /tmp/hymenu.bypass
+        exit 0
+    elif [ "$RESULT" == "4" ]; then
+        reboot
+    elif [ "$RESULT" == "5" ]; then
+        poweroff
+    fi
+}
+hymenu_submenu_config() {
+    RESULT=$(dialog --no-cancel --menu "HyperUEFI Configurator" 0 0 5 "1" "Edit hypervisor config" "2" "Edit Pi config" "3" "Edit network config" "4" "Back" 3>&1 1>&2 2>&3)
+    if [ "$RESULT" == "1" ]; then
+        hymenu_submenu_config_vm
+        while true; do hymenu_submenu_config; done
+    elif [ "$RESULT" == "2" ]; then
+        raspi-config
+        while true; do hymenu_submenu_config; done
+    elif [ "$RESULT" == "3" ]; then
+        nmtui
+        while true; do hymenu_submenu_config; done
+    elif [ "$RESULT" == "4" ]; then
+        while true; do hymenu; done
+    fi
+}
+hymenu_submenu_config_vm() {
+    RESULT=$(dialog --no-cancel --menu "HyperUEFI VM Configurator" 0 0 5 "1" "RAM config" "2" "Networking config" "3" "Disk configuration" "4" "GPU configuration" "5" "Core count" "6" "Additional arguments" "7" "Back" 3>&1 1>&2 2>&3)
+    if [ "$RESULT" == "1" ]; then
+        if dialog --no-cancel --yesno "Do you want to use auto calculation?" 0 0; then
+            clear
+            printf "RAM size: "
+            echo "$(($(free -mt | tail -n1 | awk '{print $NF}')-$((1024+768))))M" | tee /opt/hyperuefi/ramconfig
+            sleep 3
+        else
+            RESULT=$(dialog --no-cancel --inputbox "New RAM size (units M, G)\nThis field is not checked." 0 0 "$(cat /opt/hyperuefi/ramconfig)" 3>&1 1>&2 2>&3)
+            echo "$RESULT" > /opt/hyperuefi/ramconfig
+        fi
+        while true; do hymenu_submenu_config_vm; done
+    elif [ "$RESULT" == "2" ]; then
+        RESULT=$(dialog --no-cancel --inputbox "Networking configuration (user, slirp)\nThis field is not checked." 0 0 "$(cat /opt/hyperuefi/netargs)" 3>&1 1>&2 2>&3)
+        echo "$RESULT" > /opt/hyperuefi/netargs
+        while true; do hymenu_submenu_config_vm; done
+    elif [ "$RESULT" == "3" ]; then
+        RESULT=$(dialog --no-cancel --inputbox "New disk size (units M, G)\nThis field is not checked." 0 0 3>&1 1>&2 2>&3)
+        if [ -e /opt/hyperuefi/kvm.qcow2 ]; then
+            qemu-img resize -f qcow2 /opt/hyperuefi/kvm.qcow2 "$RESULT"
+        else
+            qemu-img create -f qcow2 /opt/hyperuefi/kvm.qcow2 "$RESULT"
+        fi
+        while true; do hymenu_submenu_config_vm; done
+    elif [ "$RESULT" == "4" ]; then
+        RESULT=$(dialog --no-cancel --inputbox "GPU model (from virtio-gpu(-pci), virtio-gpu-gl(-pci), ramfb)\nThis field is not checked." 0 0 "$(cat /opt/hyperuefi/gpuconfig)" 3>&1 1>&2 2>&3)
+        echo "$RESULT" > /opt/hyperuefi/gpuconfig
+        while true; do hymenu_submenu_config_vm; done
+    elif [ "$RESULT" == "5" ]; then
+        RESULT=$(dialog --no-cancel --inputbox "CPU core count (host: $(nproc))\nThis field is not checked." 0 0 "$(cat /opt/hyperuefi/coreconfig)" 3>&1 1>&2 2>&3)
+        echo "$RESULT" > /opt/hyperuefi/coreconfig
+        while true; do hymenu_submenu_config_vm; done
+    elif [ "$RESULT" == "6" ]; then
+        RESULT=$(dialog --no-cancel --inputbox "Extra QEMU arguments\nThis field is not checked." 0 0 "$(cat /opt/hyperuefi/args)" 3>&1 1>&2 2>&3)
+        echo "$RESULT" > /opt/hyperuefi/args
+        while true; do hymenu_submenu_config_vm; done
+    elif [ "$RESULT" == "7" ]; then
+        while true; do hymenu_submenu_config; done
+    fi
+}
+while true; do hymenu; done

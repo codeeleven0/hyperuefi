@@ -1,0 +1,5 @@
+#!/bin/bash
+echo "KVMD_B64=\"$(cat kvmd | openssl base64 -A)\"" > hyinst.sh
+echo "HYMENU_B64=\"$(cat hymenu | openssl base64 -A)\"" >> hyinst.sh
+cat hyinstaller.sh >> hyinst.sh
+echo "hyinst.sh"
