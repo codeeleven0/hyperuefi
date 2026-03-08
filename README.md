@@ -45,3 +45,6 @@ To list editions, run `dism /get-wiminfo /wimfile:install.wim`. Then, note the I
 To install (will take a long time), run `dism /apply-image /imagefile:install.wim /index:ID /applydir:Q:`.<br>
 To install the bootloader, run `bcdboot Q:\Windows /s P:`.<br>
 To reboot, run `wpeutil reboot`.<br>
+
+# Important Note
+Sometimes, the WIM inside the installation drive might fail. Copy the WIM from a verified image to a USB drive and invoke DISM there.
