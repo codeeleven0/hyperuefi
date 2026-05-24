@@ -6,8 +6,7 @@ installer() {
     sudo chmod +x /sbin/hymenu
     sudo chmod +x /opt/hyperuefi/kvmd
 }
-yes | sudo apt update
-yes | sudo apt install -y util-linux usbutils telnet dialog qemu-block-extra qemu-utils qemu-system-gui qemu-system-data qemu-system-common qemu-efi-aarch64 qemu-system-misc qemu-system qemu-system-aarch64
+sudo apt update && sudo apt upgrade -y && sudo apt install -y util-linux usbutils telnet dialog qemu-block-extra qemu-utils qemu-system-gui qemu-system-data qemu-system-common qemu-efi-aarch64 qemu-system-misc qemu-system qemu-system-aarch64
 printf "Installing hyperuefi... "
 installer
 echo "done!"
