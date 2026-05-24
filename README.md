@@ -1,6 +1,9 @@
 # HyperUEFI
 Use Windows on your Raspberry Pi 3/4/5.
 
+# IMPORTANT
+You should disable sudo password prompting and enable TTY autologin for this to work in recent versions of Pi OS.
+
 # How does it work?
 HyperUEFI uses QEMU with KVM to use Pi's processor to run Windows on a thin Linux layer (Pi OS Lite).<br>
 It has:<br>
